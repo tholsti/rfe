@@ -1,37 +1,36 @@
 import React from 'react';
 import qs from 'qs';
+import ListOfTags from './ListOfTags';
 
-const ListOfTags = (props) => {
-  const { tags, removeTag } = props;
-  
-  return (
-    <ul>
-      {tags && tags.map((tag, index) => (
-        <li onClick={() => removeTag(index)} key={index}>
-          {tag}
-        </li>
-      ))}
-    </ul>
-  )};
+const constructHash = (updatedTags) => {
+  // By constructing the whole hash string we will allow the potential use of other attributes in string
+  window.location.hash = `tags=${updatedTags.join(',')}`;
+};
 
 const TagBox = () => {
   const [tags, setTags] = React.useState([]);
   const [newTag, setNewTag] = React.useState('');
-
-  const urlHash = (() => {
+  
+  const getUrlHash = () => {
     const hash = window.location.hash;
-    const parsedString = qs.parse(hash.replace('#', ''));
-    return parsedString;
-  })();
+    const parsedHash = qs.parse(hash.replace('#', ''));
+    return parsedHash;
+  };
 
   React.useEffect(() => {
-    setTags(urlHash.tags && urlHash.tags.split(','));
-  }, [urlHash]);
-  
-  const constructHash = (updatedTags) => {
-    // By constructing the whole hash string we will allow the potential use of other attributes in string
-    window.location.hash = `tags=${updatedTags.join(',')}`;
-  };
+    setTags(getUrlHash().tags ? getUrlHash().tags.split(',') : []);
+  }, []);
+
+  React.useEffect(() => {
+    window.addEventListener(
+      "hashchange", 
+      () => {
+        console.log(getUrlHash().tags);
+        setTags(getUrlHash().tags && getUrlHash().tags.split(','))
+      },
+      false
+    );
+  }, [])
 
   const removeTag = (index) => {
     constructHash([
@@ -40,12 +39,12 @@ const TagBox = () => {
     ]);
   }
 
-  const handleClick = (e) => {
+  const handleClick = () => {
     setNewTag('');
 
     constructHash([
       ...tags,
-      newTag
+      newTag,
     ]);
   };
 
@@ -54,16 +53,23 @@ const TagBox = () => {
   };
 
   return (
-    <div className="App">
+    <div className={'TagBox'}>
+      <div className={'TagBoxHeader'}>List of tags</div>
       <ListOfTags tags={tags} removeTag={removeTag}/>
-      <form>
-        <input type={'text'} value={newTag} onChange={handleChange} />
-        <button type={'submit'} onClick={handleClick}>
-          Submit
+      <div className={'TagInputContainer'}>
+        <input 
+          className={'TagInput'}
+          type={'text'}
+          value={newTag}
+          onChange={handleChange}
+          placeholder={'Enter new tag'}
+        />
+        <button className={'TagInputButton'} type={'button'} onClick={handleClick}>
+          Enter
         </button>
-      </form>
+      </div>
     </div>
   );
-}
+};
 
 export default TagBox;
